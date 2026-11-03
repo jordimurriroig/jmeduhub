@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>jmeduhub - Plataforma Educativa Interactiva</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+        }
+        #map, #map-europe {
+            height: calc(100vh - 210px);
+            min-height: 480px;
+            width: 100%;
+            background-color: #aad3df;
+            z-index: 1;
+        }
+        
+        .pulse-target {
+            width: 24px;
+            height: 24px;
+            background-color: #10b981;
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.9);
+            animation: pulse-ring 1.5s infinite;
+        }
+        
+        .pulse-user {
+            width: 18px;
+            height: 18px;
+            background-color: #ef4444;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+        }
+
+        .study-marker {
+            width: 14px;
+            height: 14px;
+            background-color: #3b82f6;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(59, 130, 246, 0.6);
+            transition: transform 0.2s;
+        }
+        .study-marker:hover {
+            transform: scale(1.4);
+            background-color: #1d4ed8;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 18px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 flex flex-col min-h-screen">
+
+    <!-- GLOBAL HEADER WITH HUB NAVIGATION -->
+    <header class="bg-slate-950 text-white shadow-xl z-30 border-b border-slate-800 sticky top-0">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            
+            <!-- BRANDING -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('home')">
+                <div class="bg-gradient-to-tr from-amber-500 to-emerald-500 p-2 rounded-xl text-2xl font-black text-slate-950 shadow-md">
+                    🎓
+                </div>
+                <div>
+                    <h1 class="font-black text-2xl tracking-wider text-amber-400">jmeduhub</h1>
+                    <p class="text-[11px] text-slate-400 hidden sm:block">Plataforma Educativa de Geografia, Matemàtiques i Anglès</p>
+                </div>
+            </div>
+
+            <!-- TAB NAVIGATION -->
+            <nav class="flex items-center gap-1.5 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 flex-wrap">
+                <button id="nav-home" onclick="switchTab('home')" class="px-3 py-2 rounded-xl font-bold text-sm transition flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow">
+                    🏠 <span>Inici</span>
+                </button>
+                <button id="nav-geo" onclick="switchTab('geo')" class="px-3 py-2 rounded-xl font-semibold text-sm transition flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    🌍 <span>Món</span>
+                </button>
+                <button id="nav-europe" onclick="switchTab('europe')" class="px-3 py-2 rounded-xl font-semibold text-sm transition flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    🇪🇺 <span>Europa</span>
+                </button>
+                <button id="nav-math" onclick="switchTab('math')" class="px-3 py-2 rounded-xl font-semibold text-sm transition flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    📐 <span>Mates</span>
+                </button>
+                <button id="nav-english" onclick="switchTab('english')" class="px-3 py-2 rounded-xl font-semibold text-sm transition flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800">
+                    🇬🇧 <span>Anglès</span>
+                </button>
+            </nav>
+
+            <!-- SOUND TOGGLE -->
+            <div class="flex items-center gap-2">
+                <button id="btn-sound" onclick="toggleSound()" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-slate-200 transition" title="Activar/Desactivar So">
+                    🔊
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- SECTION 1: HOME HUB -->
+    <div id="tab-home" class="flex-grow flex flex-col justify-center items-center px-4 py-8 max-w-7xl mx-auto w-full">
+        <div class="text-center max-w-2xl mb-8">
+            <h2 class="text-4xl sm:text-5xl font-black text-white mb-3">Benvingut a <span class="text-amber-400">jmeduhub</span></h2>
+            <p class="text-slate-300 text-sm sm:text-base">Selecciona un mòdul d'aprenentatge per començar a practicar geografia mundial, europa, matemàtiques o verbs irregularis.</p>
+        </div>
+
+        <!-- GLOBAL STATS CARD -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-2xl w-full mb-10">
+            <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 text-center">
+                <span class="text-xs text-slate-400 uppercase font-semibold block mb-1">Puntuació Global</span>
+                <span id="global-score-val" class="text-2xl sm:text-3xl font-black text-emerald-400">0 pts</span>
+            </div>
+            <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 text-center">
+                <span class="text-xs text-slate-400 uppercase font-semibold block mb-1">Exercicis Fets</span>
+                <span id="global-count-val" class="text-2xl sm:text-3xl font-black text-amber-400">0</span>
+            </div>
+            <div class="bg-slate-800/80 p-4 rounded-2xl border border-slate-700 text-center col-span-2 sm:col-span-1">
+                <span class="text-xs text-slate-400 uppercase font-semibold block mb-1">Ratxa Màxima</span>
+                <span id="global-streak-val" class="text-2xl sm:text-3xl font-black text-amber-300">🔥 0</span>
+            </div>
+        </div>
+
+        <!-- MODULE SELECTION CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl w-full">
+            <!-- GEOGRAPHY WORLD MODULE CARD -->
+            <div onclick="switchTab('geo')" class="group bg-slate-800/90 border border-slate-700 hover:border-amber-500/50 p-6 rounded-3xl transition-all duration-300 hover:-translate-y-1 cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 right-0 p-6 text-7xl opacity-10 group-hover:opacity-20 transition">🗺️</div>
+                <div>
+                    <div class="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center text-2xl mb-4 border border-amber-500/30">
+                        🌍
+                    </div>
+                    <h3 class="text-xl font-black text-white group-hover:text-amber-400 transition mb-2">Atles del Món</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        97 accidents geogràfics mundials (rius, llacs, mars, deserts, penínsules i pics).
+                    </p>
+                </div>
+                <div class="mt-6 flex items-center justify-between text-xs font-bold text-amber-400">
+                    <span>Obrir Mapa Món ➔</span>
+                    <span class="bg-slate-900/80 px-2 py-0.5 rounded-lg text-slate-300 border border-slate-700">97 Elements</span>
+                </div>
+            </div>
+
+            <!-- GEOGRAPHY EUROPE MODULE CARD -->
+            <div onclick="switchTab('europe')" class="group bg-slate-800/90 border border-slate-700 hover:border-sky-500/50 p-6 rounded-3xl transition-all duration-300 hover:-translate-y-1 cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 right-0 p-6 text-7xl opacity-10 group-hover:opacity-20 transition">🇪🇺</div>
+                <div>
+                    <div class="w-12 h-12 bg-sky-500/20 text-sky-400 rounded-2xl flex items-center justify-center text-2xl mb-4 border border-sky-500/30">
+                        🇪🇺
+                    </div>
+                    <h3 class="text-xl font-black text-white group-hover:text-sky-400 transition mb-2">Atles d'Europa</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Accidents geogràfics d'Europa (penínsules, serralades, pics, estrets, mars, rius, illes i massissos).
+                    </p>
+                </div>
+                <div class="mt-6 flex items-center justify-between text-xs font-bold text-sky-400">
+                    <span>Obrir Mapa Europa ➔</span>
+                    <span class="bg-slate-900/80 px-2 py-0.5 rounded-lg text-slate-300 border border-slate-700">Europa</span>
+                </div>
+            </div>
+
+            <!-- MATH MODULE CARD -->
+            <div onclick="switchTab('math')" class="group bg-slate-800/90 border border-slate-700 hover:border-emerald-500/50 p-6 rounded-3xl transition-all duration-300 hover:-translate-y-1 cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 right-0 p-6 text-7xl opacity-10 group-hover:opacity-20 transition">📐</div>
+                <div>
+                    <div class="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl mb-4 border border-emerald-500/30">
+                        🧮
+                    </div>
+                    <h3 class="text-xl font-black text-white group-hover:text-emerald-400 transition mb-2">Matemàtiques</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Operacions, fraccions i conversió de decimals a fraccions amb passos explicats.
+                    </p>
+                </div>
+                <div class="mt-6 flex items-center justify-between text-xs font-bold text-emerald-400">
+                    <span>Obrir Mates ➔</span>
+                    <span class="bg-slate-900/80 px-2 py-0.5 rounded-lg text-slate-300 border border-slate-700">3 Nivells</span>
+                </div>
+            </div>
+
+            <!-- ENGLISH MODULE CARD -->
+            <div onclick="switchTab('english')" class="group bg-slate-800/90 border border-slate-700 hover:border-purple-500/50 p-6 rounded-3xl transition-all duration-300 hover:-translate-y-1 cursor-pointer shadow-xl relative overflow-hidden flex flex-col justify-between">
+                <div class="absolute top-0 right-0 p-6 text-7xl opacity-10 group-hover:opacity-20 transition">📖</div>
+                <div>
+                    <div class="w-12 h-12 bg-purple-500/20 text-purple-400 rounded-2xl flex items-center justify-center text-2xl mb-4 border border-purple-500/30">
+                        🇬🇧
+                    </div>
+                    <h3 class="text-xl font-black text-white group-hover:text-purple-400 transition mb-2">Anglès (Verbs)</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Completa les formes d'Infinitive, Past Simple i Past Participle de més de 100 verbs.
+                    </p>
+                </div>
+                <div class="mt-6 flex items-center justify-between text-xs font-bold text-purple-400">
+                    <span>Practicar Verbs ➔</span>
+                    <span class="bg-slate-900/80 px-2 py-0.5 rounded-lg text-slate-300 border border-slate-700">+100 Verbs</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: GEOGRAPHY MODULE (WORLD) -->
+    <div id="tab-geo" class="hidden flex-grow flex flex-col">
+        <div class="bg-slate-800 text-slate-100 border-b border-slate-700 px-4 py-2.5 z-10 shadow-sm">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <label for="select-category" class="font-semibold text-slate-300">Categoria:</label>
+                    <select id="select-category" onchange="onCategoryChange()" class="bg-slate-900 text-amber-300 border border-slate-600 rounded-lg px-2.5 py-1 font-medium outline-none">
+                        <option value="ALL">🌟 Totes les categories (97 elements)</option>
+                        <option value="Rius">🏞️ Rius (20)</option>
+                        <option value="Llacs">💧 Llacs (12)</option>
+                        <option value="Penínsules">📍 Penínsules (10)</option>
+                        <option value="Serralades">🏔️ Serralades (12)</option>
+                        <option value="Pics">🔺 Pics i Muntanyes (12)</option>
+                        <option value="Mars">🌊 Mars i Golfs (10)</option>
+                        <option value="Deserts">🏜️ Deserts (7)</option>
+                        <option value="Planes">🌾 Planes i Conques (7)</option>
+                        <option value="Altiplans">⛰️ Altiplans (6)</option>
+                    </select>
+
+                    <div class="flex items-center gap-1.5">
+                        <label for="select-questions-count" class="font-semibold text-slate-300">Preguntes:</label>
+                        <select id="select-questions-count" onchange="resetQuiz()" class="bg-slate-900 text-slate-200 border border-slate-600 rounded-lg px-2 py-1 outline-none">
+                            <option value="10">10 preguntes</option>
+                            <option value="20" selected>20 preguntes</option>
+                            <option value="30">30 preguntes</option>
+                            <option value="ALL">Totes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btn-mode-quiz" onclick="switchMode('quiz')" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-semibold text-white shadow transition text-xs">🎮 Joc</button>
+                    <button id="btn-mode-study" onclick="switchMode('study')" class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 font-semibold text-slate-200 border border-slate-700 transition text-xs">🗺️ Pràctica Lliure</button>
+                    <button onclick="openStudyModal()" class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 font-medium text-slate-200 border border-slate-700 transition text-xs">📚 Llista</button>
+                    <select id="select-layer" onchange="changeMapLayer(this.value)" class="bg-slate-900 text-slate-200 border border-slate-600 rounded-lg px-2 py-1 outline-none text-xs">
+                        <option value="esriPhysical" selected>🎨 Relleu Físic</option>
+                        <option value="openTopo">⛰️ Topogràfic</option>
+                        <option value="esriSatellite">🛰️ Satèl·lit</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz-hud" class="bg-slate-900 border-b border-amber-500/30 text-white px-4 py-2.5 shadow-md z-10">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="bg-amber-500/20 text-amber-300 p-2 rounded-xl text-xl border border-amber-500/30">🎯</div>
+                    <div>
+                        <span class="text-[10px] uppercase tracking-wider font-semibold text-amber-400 block">On es troba al mapa (Món)?</span>
+                        <h2 id="target-name" class="text-lg sm:text-xl font-black text-white tracking-wide">-- carregant --</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 bg-slate-800/80 px-4 py-1.5 rounded-xl border border-slate-700 text-xs">
+                    <div>Pregunta: <span id="quiz-progress" class="font-bold text-amber-400">0 / 0</span></div>
+                    <div class="h-4 w-px bg-slate-700"></div>
+                    <div>Punts: <span id="quiz-score" class="font-bold text-emerald-400">0 pts</span></div>
+                    <div class="h-4 w-px bg-slate-700"></div>
+                    <div>Ratxa: <span id="quiz-streak" class="font-bold text-amber-300">🔥 0</span></div>
+                    <button onclick="resetQuiz()" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-slate-200">🔄</button>
+                </div>
+            </div>
+        </div>
+
+        <main class="relative flex-grow">
+            <div id="map"></div>
+            <div id="feedback-banner" class="hidden absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] max-w-lg w-11/12 bg-slate-900 text-white rounded-2xl shadow-2xl p-4 border transition-all duration-300">
+                <div class="flex items-start justify-between gap-3">
+                    <div id="feedback-icon" class="text-3xl"></div>
+                    <div class="flex-grow">
+                        <h3 id="feedback-title" class="font-extrabold text-base"></h3>
+                        <p id="feedback-desc" class="text-xs text-slate-300 mt-0.5"></p>
+                    </div>
+                    <button onclick="nextQuestion()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm">Següent ➔</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SECTION 3: GEOGRAPHY MODULE (EUROPE) -->
+    <div id="tab-europe" class="hidden flex-grow flex flex-col">
+        <div class="bg-slate-800 text-slate-100 border-b border-slate-700 px-4 py-2.5 z-10 shadow-sm">
+            <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <label for="select-category-europe" class="font-semibold text-slate-300">Categoria:</label>
+                    <select id="select-category-europe" onchange="onCategoryChangeEurope()" class="bg-slate-900 text-sky-300 border border-slate-600 rounded-lg px-2.5 py-1 font-medium outline-none">
+                        <option value="ALL">🌟 Totes les categories d'Europa</option>
+                        <option value="Penínsules">📍 Penínsules</option>
+                        <option value="Serralades">🏔️ Serralades i cadenes</option>
+                        <option value="Pics">🔺 Pics</option>
+                        <option value="Estrets">🌊 Estrets i canals</option>
+                        <option value="Mars">🌊 Mars</option>
+                        <option value="Llacs">💧 Llacs</option>
+                        <option value="Illes">🏝️ Illes</option>
+                        <option value="Rius">🏞️ Rius</option>
+                        <option value="Planes">🌾 Planes</option>
+                        <option value="Altiplans">⛰️ Altiplans i Massissos</option>
+                    </select>
+
+                    <div class="flex items-center gap-1.5">
+                        <label for="select-questions-count-europe" class="font-semibold text-slate-300">Preguntes:</label>
+                        <select id="select-questions-count-europe" onchange="resetQuizEurope()" class="bg-slate-900 text-slate-200 border border-slate-600 rounded-lg px-2 py-1 outline-none">
+                            <option value="10">10 preguntes</option>
+                            <option value="20" selected>20 preguntes</option>
+                            <option value="30">30 preguntes</option>
+                            <option value="ALL">Totes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btn-mode-quiz-europe" onclick="switchModeEurope('quiz')" class="px-3 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 font-semibold text-white shadow transition text-xs">🎮 Joc</button>
+                    <button id="btn-mode-study-europe" onclick="switchModeEurope('study')" class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 font-semibold text-slate-200 border border-slate-700 transition text-xs">🗺️ Pràctica Lliure</button>
+                    <button onclick="openStudyModalEurope()" class="px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 font-medium text-slate-200 border border-slate-700 transition text-xs">📚 Llista Europa</button>
+                    <select id="select-layer-europe" onchange="changeMapLayerEurope(this.value)" class="bg-slate-900 text-slate-200 border border-slate-600 rounded-lg px-2 py-1 outline-none text-xs">
+                        <option value="esriPhysical" selected>🎨 Relleu Físic</option>
+                        <option value="openTopo">⛰️ Topogràfic</option>
+                        <option value="esriSatellite">🛰️ Satèl·lit</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="quiz-hud-europe" class="bg-slate-900 border-b border-sky-500/30 text-white px-4 py-2.5 shadow-md z-10">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="bg-sky-500/20 text-sky-300 p-2 rounded-xl text-xl border border-sky-500/30">🎯</div>
+                    <div>
+                        <span class="text-[10px] uppercase tracking-wider font-semibold text-sky-400 block">On es troba al mapa (Europa)?</span>
+                        <h2 id="target-name-europe" class="text-lg sm:text-xl font-black text-white tracking-wide">-- carregant --</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 bg-slate-800/80 px-4 py-1.5 rounded-xl border border-slate-700 text-xs">
+                    <div>Pregunta: <span id="quiz-progress-europe" class="font-bold text-sky-400">0 / 0</span></div>
+                    <div class="h-4 w-px bg-slate-700"></div>
+                    <div>Punts: <span id="quiz-score-europe" class="font-bold text-emerald-400">0 pts</span></div>
+                    <div class="h-4 w-px bg-slate-700"></div>
+                    <div>Ratxa: <span id="quiz-streak-europe" class="font-bold text-amber-300">🔥 0</span></div>
+                    <button onclick="resetQuizEurope()" class="bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-slate-200">🔄</button>
+                </div>
+            </div>
+        </div>
+
+        <main class="relative flex-grow">
+            <div id="map-europe"></div>
+            <div id="feedback-banner-europe" class="hidden absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] max-w-lg w-11/12 bg-slate-900 text-white rounded-2xl shadow-2xl p-4 border transition-all duration-300">
+                <div class="flex items-start justify-between gap-3">
+                    <div id="feedback-icon-europe" class="text-3xl"></div>
+                    <div class="flex-grow">
+                        <h3 id="feedback-title-europe" class="font-extrabold text-base"></h3>
+                        <p id="feedback-desc-europe" class="text-xs text-slate-300 mt-0.5"></p>
+                    </div>
+                    <button onclick="nextQuestionEurope()" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm">Següent ➔</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SECTION 4: MATH MODULE -->
+    <div id="tab-math" class="hidden flex-grow flex flex-col items-center justify-center px-4 py-6 max-w-4xl mx-auto w-full">
+        <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl w-full mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-slate-400 text-xs font-semibold uppercase">Operació:</span>
+                <select id="math-op-type" onchange="generateMathProblem()" class="bg-slate-900 text-emerald-400 border border-slate-600 rounded-xl px-3 py-1.5 font-bold outline-none text-sm">
+                    <option value="add">➕ Sumes</option>
+                    <option value="sub">➖ Restes</option>
+                    <option value="mul">✖️ Multiplicacions</option>
+                    <option value="div">➗ Divisions</option>
+                    <option value="frac">🔢 Fraccions</option>
+                    <option value="dec_to_frac">🔤 Decimals a Fraccions</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-slate-400 text-xs font-semibold uppercase">Dificultat:</span>
+                <select id="math-diff" onchange="generateMathProblem()" class="bg-slate-900 text-amber-300 border border-slate-600 rounded-xl px-3 py-1.5 font-bold outline-none text-sm">
+                    <option value="easy">🟢 Fàcil</option>
+                    <option value="med" selected>🟡 Mitjà</option>
+                    <option value="hard">🔴 Difícil</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="bg-slate-800/90 border border-slate-700 rounded-3xl p-6 sm:p-8 w-full shadow-2xl relative">
+            <div class="flex justify-between items-center mb-6">
+                <span class="text-xs uppercase tracking-wider text-slate-400 font-bold">Pràctica Matemàtica</span>
+                <span id="math-streak-badge" class="bg-slate-900 text-amber-300 text-xs px-3 py-1 rounded-full border border-slate-700 font-bold">🔥 Ratxa: 0</span>
+            </div>
+            <div class="min-h-[140px] flex flex-col justify-center items-center my-4">
+                <div id="math-expression" class="text-2xl sm:text-4xl font-black text-white text-center tracking-wide"></div>
+            </div>
+            <div id="math-input-container" class="flex flex-col items-center gap-3 my-6"></div>
+            <div class="flex justify-center gap-3">
+                <button onclick="checkMathAnswer()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-8 py-3 rounded-xl transition text-base">Comprovar Resposta</button>
+                <button onclick="generateMathProblem()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold px-4 py-3 rounded-xl transition text-base">🔄 Nova</button>
+            </div>
+            <div id="math-explanation-box" class="hidden mt-6 bg-slate-950 border border-amber-500/40 p-4 rounded-2xl text-xs sm:text-sm text-slate-200">
+                <h4 class="font-extrabold text-amber-400 mb-1">💡 Explicació pas a pas:</h4>
+                <div id="math-explanation-text" class="space-y-1 text-slate-300"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 5: ENGLISH MODULE -->
+    <div id="tab-english" class="hidden flex-grow flex flex-col items-center justify-center px-4 py-6 max-w-5xl mx-auto w-full">
+        <div class="bg-slate-800 border border-slate-700 p-4 rounded-2xl w-full mb-6 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="text-slate-400 text-xs font-semibold uppercase">Preguntes:</span>
+                <select id="verb-count-select" onchange="startVerbQuiz()" class="bg-slate-900 text-purple-400 border border-slate-600 rounded-xl px-3 py-1.5 font-bold outline-none text-sm">
+                    <option value="10" selected>10 Preguntes</option>
+                    <option value="20">20 Preguntes</option>
+                    <option value="30">30 Preguntes</option>
+                    <option value="all">Tots (+100)</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openVerbStudyModal()" class="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 font-bold text-white shadow text-xs">📚 Llista Verbs</button>
+                <button onclick="startVerbQuiz()" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-700 text-slate-200 font-semibold border border-slate-700 text-xs">🔄 Reiniciar</button>
+            </div>
+        </div>
+
+        <div class="bg-slate-800/90 border border-slate-700 rounded-3xl p-6 sm:p-8 w-full shadow-2xl relative">
+            <div class="flex justify-between items-center mb-6 border-b border-slate-700 pb-4">
+                <div>
+                    <span class="text-xs uppercase tracking-wider text-purple-400 font-extrabold block">Pràctica d'Anglès</span>
+                    <h3 class="text-xl font-black text-white">Verbs Irregularis</h3>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="verb-progress-badge" class="bg-slate-900 text-slate-300 text-xs px-3 py-1 rounded-full border border-slate-700 font-bold">0 / 0</span>
+                    <span id="verb-streak-badge" class="bg-slate-900 text-amber-300 text-xs px-3 py-1 rounded-full border border-slate-700 font-bold">🔥 Ratxa: 0</span>
+                </div>
+            </div>
+            <div id="verb-quiz-container" class="overflow-x-auto my-4"></div>
+            <div class="flex flex-col items-center gap-3 mt-6">
+                <button onclick="checkVerbAnswers()" class="bg-purple-500 hover:bg-purple-400 text-slate-950 font-black px-8 py-3 rounded-xl transition text-base">Comprovar Respostes</button>
+                <div id="verb-results-msg" class="text-center font-bold text-base mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <div id="modal-results" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 text-white rounded-3xl p-6 max-w-lg w-full shadow-2xl text-center">
+            <div id="result-badge" class="text-6xl mb-2">🏆</div>
+            <h2 id="result-grade" class="text-2xl font-black text-amber-400">Excel·lent!</h2>
+            <div class="grid grid-cols-2 gap-3 my-5">
+                <div class="bg-slate-800 p-3 rounded-2xl"><span class="text-xs text-slate-400">Punts</span><p id="result-score" class="text-2xl font-black text-emerald-400">0 pts</p></div>
+                <div class="bg-slate-800 p-3 rounded-2xl"><span class="text-xs text-slate-400">Precisió</span><p id="result-accuracy" class="text-2xl font-black text-amber-400">0%</p></div>
+            </div>
+            <button onclick="closeModal('modal-results'); switchTab('home');" class="w-full py-3 bg-amber-500 text-slate-950 font-bold rounded-xl">Menú Inici</button>
+        </div>
+    </div>
+
+    <div id="modal-study" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 text-white rounded-3xl p-6 max-w-3xl w-full shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                <h3 class="text-xl font-bold text-amber-400">Llista Completa - Món (97)</h3>
+                <button onclick="closeModal('modal-study')" class="text-slate-400 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="overflow-y-auto flex-grow pr-1">
+                <div id="study-list-container" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-study-europe" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 text-white rounded-3xl p-6 max-w-3xl w-full shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                <h3 class="text-xl font-bold text-sky-400">Llista Completa - Europa</h3>
+                <button onclick="closeModal('modal-study-europe')" class="text-slate-400 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="overflow-y-auto flex-grow pr-1">
+                <div id="study-list-container-europe" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-verb-study" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[2000] flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 text-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                <h3 class="text-xl font-bold text-purple-400">Llista de Verbs Irregularis</h3>
+                <button onclick="closeModal('modal-verb-study')" class="text-slate-400 hover:text-white text-xl">✕</button>
+            </div>
+            <div class="overflow-y-auto flex-grow pr-1">
+                <table class="w-full text-left text-xs sm:text-sm border-collapse">
+                    <thead class="sticky top-0 bg-slate-950 text-purple-400 uppercase font-black border-b border-slate-800">
+                        <tr><th class="p-3">Infinitive (V1)</th><th class="p-3">Past Simple (V2)</th><th class="p-3">Past Participle (V3)</th></tr>
+                    </thead>
+                    <tbody id="verb-study-tbody" class="divide-y divide-slate-800 text-slate-200"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        const GEOGRAPHY_DATA = [
+            { id: "riu-nil", name: "Riu Nil", category: "Rius", coords: [31.0, 26.0], tolerance: 700 },
+            { id: "riu-congo", name: "Riu Congo", category: "Rius", coords: [23.0, -1.0], tolerance: 650 },
+            { id: "riu-zambezi", name: "Riu Zambezi", category: "Rius", coords: [27.0, -15.0], tolerance: 600 },
+            { id: "riu-niger", name: "Riu Níger", category: "Rius", coords: [2.0, 14.0], tolerance: 600 },
+            { id: "riu-mississipi", name: "Riu Mississipí-Missouri", category: "Rius", coords: [-90.0, 35.0], tolerance: 700 },
+            { id: "riu-yukon", name: "Riu Yukon", category: "Rius", coords: [-140.0, 64.0], tolerance: 600 },
+            { id: "riu-colorado", name: "Riu Colorado", category: "Rius", coords: [-112.0, 36.0], tolerance: 500 },
+            { id: "riu-mackenzie", name: "Riu Mackenzie", category: "Rius", coords: [-122.0, 62.0], tolerance: 600 },
+            { id: "riu-amazones", name: "Riu Amazones", category: "Rius", coords: [-60.0, -3.0], tolerance: 850 },
+            { id: "riu-orinoco", name: "Riu Orinoco", category: "Rius", coords: [-65.0, 7.0], tolerance: 500 },
+            { id: "riu-parana", name: "Riu Paranà", category: "Rius", coords: [-58.0, -27.0], tolerance: 600 },
+            { id: "riu-iangtse", name: "Riu Iang-Tsé", category: "Rius", coords: [112.0, 30.0], tolerance: 650 },
+            { id: "riu-groc", name: "Riu Groc", category: "Rius", coords: [110.0, 36.0], tolerance: 600 },
+            { id: "riu-mekong", name: "Riu Mekong", category: "Rius", coords: [102.0, 18.0], tolerance: 550 },
+            { id: "riu-ganges", name: "Riu Ganges", category: "Rius", coords: [85.0, 25.0], tolerance: 500 },
+            { id: "riu-indus", name: "Riu Indus", category: "Rius", coords: [71.0, 28.0], tolerance: 500 },
+            { id: "riu-obi", name: "Riu Obi", category: "Rius", coords: [77.0, 60.0], tolerance: 700 },
+            { id: "riu-lena", name: "Riu Lena", category: "Rius", coords: [125.0, 62.0], tolerance: 700 },
+            { id: "riu-murray", name: "Riu Murray", category: "Rius", coords: [143.0, -35.0], tolerance: 500 },
+            { id: "riu-darling", name: "Riu Darling", category: "Rius", coords: [142.0, -31.0], tolerance: 500 },
+            { id: "llac-superior", name: "Llac Superior", category: "Llacs", coords: [-87.5, 47.5], tolerance: 400 },
+            { id: "llac-victoria", name: "Llac Victòria", category: "Llacs", coords: [33.0, -1.0], tolerance: 450 },
+            { id: "llac-tanganyika", name: "Llac Tanganyika", category: "Llacs", coords: [29.5, -6.0], tolerance: 450 },
+            { id: "llac-baikal", name: "Llac Baikal", category: "Llacs", coords: [108.0, 53.5], tolerance: 450 },
+            { id: "llac-marcaspi", name: "Mar / Llac Caspi", category: "Llacs", coords: [51.0, 41.5], tolerance: 600 },
+            { id: "llac-titicaca", name: "Llac Titicaca", category: "Llacs", coords: [-69.5, -15.8], tolerance: 350 },
+            { id: "llac-michigan", name: "Llac Michigan", category: "Llacs", coords: [-87.0, 44.0], tolerance: 350 },
+            { id: "llac-nicaragua", name: "Llac Nicaragua", category: "Llacs", coords: [-85.5, 11.5], tolerance: 350 },
+            { id: "llac-mararal", name: "Mar / Llac d'Aral", category: "Llacs", coords: [59.0, 45.0], tolerance: 400 },
+            { id: "llac-eyre", name: "Llac Eyre", category: "Llacs", coords: [137.0, -28.5], tolerance: 400 },
+            { id: "llac-malawi", name: "Llac Malawi", category: "Llacs", coords: [34.5, -12.0], tolerance: 400 },
+            { id: "llac-txad", name: "Llac Txad", category: "Llacs", coords: [14.0, 13.0], tolerance: 400 },
+            { id: "pen-kamtxatka", name: "Península de Kamtxatka", category: "Penínsules", coords: [159.0, 56.0], tolerance: 650 },
+            { id: "pen-florida", name: "Península de Florida", category: "Penínsules", coords: [-81.5, 27.8], tolerance: 500 },
+            { id: "pen-labrador", name: "Península del Labrador", category: "Penínsules", coords: [-62.0, 53.0], tolerance: 700 },
+            { id: "pen-alaska", name: "Península d'Alaska", category: "Penínsules", coords: [-155.0, 57.0], tolerance: 650 },
+            { id: "pen-yucatan", name: "Península del Yucatán", category: "Penínsules", coords: [-89.0, 19.5], tolerance: 500 },
+            { id: "pen-indoxina", name: "Península d'Indoxina", category: "Penínsules", coords: [101.0, 15.0], tolerance: 650 },
+            { id: "pen-malacca", name: "Península de Malacca", category: "Penínsules", coords: [102.0, 4.0], tolerance: 450 },
+            { id: "pen-tamir", name: "Península de Tamir", category: "Penínsules", coords: [100.0, 75.0], tolerance: 700 },
+            { id: "pen-corea", name: "Península de Corea", category: "Penínsules", coords: [127.5, 36.5], tolerance: 450 },
+            { id: "pen-arabia", name: "Península d'Aràbia", category: "Penínsules", coords: [45.0, 23.0], tolerance: 750 },
+            { id: "ser-himalaia", name: "Serralada de l'Himàlaia", category: "Serralades", coords: [84.0, 28.5], tolerance: 750 },
+            { id: "ser-caucas", name: "Serralada del Caucas", category: "Serralades", coords: [43.5, 42.5], tolerance: 550 },
+            { id: "ser-andes", name: "Serralada dels Andes", category: "Serralades", coords: [-72.0, -20.0], tolerance: 900 },
+            { id: "ser-rocalloses", name: "Serralada de les Rocalloses", category: "Serralades", coords: [-110.0, 45.0], tolerance: 850 },
+            { id: "ser-sierramadre", name: "Serralada de Sierra Madre", category: "Serralades", coords: [-102.0, 24.0], tolerance: 600 },
+            { id: "ser-atles", name: "Serralada de l'Atles", category: "Serralades", coords: [-6.0, 32.0], tolerance: 550 },
+            { id: "ser-drakensberg", name: "Serralada de Drakensberg", category: "Serralades", coords: [29.0, -29.5], tolerance: 500 },
+            { id: "ser-divisoria", name: "Gran Serralada Divisòria", category: "Serralades", coords: [148.0, -25.0], tolerance: 750 },
+            { id: "ser-zagros", name: "Serralada de Zagros", category: "Serralades", coords: [50.0, 33.0], tolerance: 550 },
+            { id: "ser-apalatxes", name: "Serralada dels Apalatxes", category: "Serralades", coords: [-79.0, 38.0], tolerance: 650 },
+            { id: "ser-etiopes", name: "Muntanyes Etíopes", category: "Serralades", coords: [39.0, 9.0], tolerance: 550 },
+            { id: "ser-alpszealandesos", name: "Alps Neozelandesos", category: "Serralades", coords: [170.5, -43.5], tolerance: 450 },
+            { id: "pic-k2", name: "Pic K2", category: "Pics", coords: [76.5, 35.9], tolerance: 400 },
+            { id: "pic-everest", name: "Pic Everest", category: "Pics", coords: [86.9, 27.9], tolerance: 400 },
+            { id: "pic-aconcagua", name: "Pic Aconcagua", category: "Pics", coords: [-70.0, -32.6], tolerance: 400 },
+            { id: "pic-elbrus", name: "Pic Elbrus", category: "Pics", coords: [42.4, 43.3], tolerance: 400 },
+            { id: "pic-kilimanjaro", name: "Pic Kilimanjaro", category: "Pics", coords: [37.3, -3.0], tolerance: 400 },
+            { id: "pic-denali", name: "Pic McKinley (Denali)", category: "Pics", coords: [-151.0, 63.0], tolerance: 450 },
+            { id: "pic-kenya", name: "Pic Mount Kenya", category: "Pics", coords: [37.3, -0.15], tolerance: 400 },
+            { id: "pic-puncakjaya", name: "Pic Puncak Jaya", category: "Pics", coords: [137.1, -4.0], tolerance: 400 },
+            { id: "pic-kosciuszko", name: "Pic Mount Kosciuszko", category: "Pics", coords: [148.2, -36.4], tolerance: 400 },
+            { id: "pic-fuji", name: "Pic Fuji", category: "Pics", coords: [138.7, 35.3], tolerance: 350 },
+            { id: "pic-popocatepetl", name: "Pic Popocatépetl", category: "Pics", coords: [-98.6, 19.0], tolerance: 350 },
+            { id: "pic-citlaltepetl", name: "Pic Citlaltépetl", category: "Pics", coords: [-97.3, 19.0], tolerance: 350 },
+            { id: "mar-mediterrani", name: "Mar Mediterrani", category: "Mars", coords: [18.0, 35.0], tolerance: 750 },
+            { id: "mar-negre", name: "Mar Negre", category: "Mars", coords: [34.0, 43.0], tolerance: 500 },
+            { id: "mar-roig", name: "Mar Roig", category: "Mars", coords: [38.0, 20.0], tolerance: 550 },
+            { id: "mar-nord", name: "Mar del Nord", category: "Mars", coords: [3.0, 56.0], tolerance: 450 },
+            { id: "mar-baltic", name: "Mar Bàltic", category: "Mars", coords: [20.0, 58.0], tolerance: 500 },
+            { id: "mar-carib", name: "Mar Carib", category: "Mars", coords: [-75.0, 15.0], tolerance: 700 },
+            { id: "mar-mexic", name: "Golf de Mèxic", category: "Mars", coords: [-90.0, 25.0], tolerance: 650 },
+            { id: "mar-xinameridional", name: "Mar de la Xina Meridional", category: "Mars", coords: [115.0, 12.0], tolerance: 750 },
+            { id: "mar-japo", name: "Mar del Japó", category: "Mars", coords: [135.0, 38.0], tolerance: 500 },
+            { id: "mar-arabic", name: "Mar Aràbic", category: "Mars", coords: [64.0, 15.0], tolerance: 800 },
+            { id: "des-sahara", name: "Desert del Sàhara", category: "Deserts", coords: [13.0, 23.0], tolerance: 950 },
+            { id: "des-kalahari", name: "Desert de Kalahari", category: "Deserts", coords: [22.0, -23.0], tolerance: 600 },
+            { id: "des-namib", name: "Desert de Namib", category: "Deserts", coords: [15.0, -24.0], tolerance: 450 },
+            { id: "des-gobi", name: "Desert de Gobi", category: "Deserts", coords: [104.0, 42.0], tolerance: 750 },
+            { id: "des-arabic", name: "Desert Aràbic", category: "Deserts", coords: [45.0, 25.0], tolerance: 700 },
+            { id: "des-atacama", name: "Desert d'Atacama", category: "Deserts", coords: [-69.0, -23.5], tolerance: 500 },
+            { id: "des-victoria", name: "Gran Desert Victòria", category: "Deserts", coords: [129.0, -29.0], tolerance: 650 },
+            { id: "pla-artesiana", name: "Gran Conca Artesiana", category: "Planes", coords: [138.0, -26.0], tolerance: 700 },
+            { id: "pla-europea", name: "Gran Plana Europea", category: "Planes", coords: [25.0, 52.0], tolerance: 800 },
+            { id: "pla-siberiaoccid", name: "Gran Plana de la Sibèria Occidental", category: "Planes", coords: [75.0, 60.0], tolerance: 850 },
+            { id: "pla-conca-mississipi", name: "Conca del Mississipí-Missouri", category: "Planes", coords: [-92.0, 38.0], tolerance: 750 },
+            { id: "pla-nordamericana", name: "Gran Plana Nord-Americana", category: "Planes", coords: [-100.0, 40.0], tolerance: 800 },
+            { id: "pla-conca-amazones", name: "Conca de l'Amazones", category: "Planes", coords: [-62.0, -4.0], tolerance: 900 },
+            { id: "pla-conca-txad", name: "Conca del Txad", category: "Planes", coords: [16.0, 13.0], tolerance: 650 },
+            { id: "alt-iran", name: "Altiplà de l'Iran", category: "Altiplans", coords: [54.0, 32.0], tolerance: 650 },
+            { id: "alt-siberiacentral", name: "Altiplà de la Sibèria Central", category: "Altiplans", coords: [100.0, 65.0], tolerance: 800 },
+            { id: "alt-pamir", name: "Altiplà del Pamir", category: "Altiplans", coords: [73.0, 38.0], tolerance: 500 },
+            { id: "alt-tibet", name: "Altiplà del Tibet", category: "Altiplans", coords: [88.0, 33.0], tolerance: 750 },
+            { id: "alt-llacvictoria", name: "Altiplà del Llac Victòria", category: "Altiplans", coords: [33.0, -1.5], tolerance: 500 },
+            { id: "alt-brasiler", name: "Altiplà Brasiler", category: "Altiplans", coords: [-50.0, -15.0], tolerance: 800 }
+        ];
+
+        const EUROPE_GEOGRAPHY_DATA = [
+            { id: "eu-pen-iberica", name: "Pen. Ibèrica", category: "Penínsules", coords: [-4.0, 40.0], tolerance: 220 },
+            { id: "eu-pen-italica", name: "Pen. Itàlica", category: "Penínsules", coords: [12.5, 42.0], tolerance: 200 },
+            { id: "eu-pen-escandinava", name: "Pen. Escandinava", category: "Penínsules", coords: [15.0, 63.0], tolerance: 300 },
+            { id: "eu-pen-crimea", name: "Pen. de Crimea", category: "Penínsules", coords: [34.0, 45.2], tolerance: 150 },
+            { id: "eu-pen-balcanica", name: "Pen. Balcànica", category: "Penínsules", coords: [22.0, 42.0], tolerance: 220 },
+            { id: "eu-pen-kola", name: "Pen. de Kola", category: "Penínsules", coords: [38.0, 67.5], tolerance: 180 },
+            { id: "eu-pen-jutlandia", name: "Pen. de Jutlàndia", category: "Penínsules", coords: [9.0, 56.0], tolerance: 160 },
+            { id: "eu-ser-pirineus", name: "Pirineus", category: "Serralades", coords: [1.0, 42.6], tolerance: 150 },
+            { id: "eu-ser-caucas", name: "Caucas", category: "Serralades", coords: [42.0, 43.0], tolerance: 200 },
+            { id: "eu-ser-carpats", name: "Carpats", category: "Serralades", coords: [24.0, 47.0], tolerance: 200 },
+            { id: "eu-ser-apenins", name: "Apenins", category: "Serralades", coords: [13.5, 43.0], tolerance: 150 },
+            { id: "eu-ser-balcans", name: "Balcans", category: "Serralades", coords: [25.0, 43.0], tolerance: 150 },
+            { id: "eu-ser-alps", name: "Alps", category: "Serralades", coords: [10.0, 46.5], tolerance: 180 },
+            { id: "eu-ser-grampianes", name: "Grampianes", category: "Serralades", coords: [-4.2, 57.0], tolerance: 130 },
+            { id: "eu-pic-elbrus", name: "Elbrus", category: "Pics", coords: [42.4, 43.3], tolerance: 120 },
+            { id: "eu-pic-mulhacen", name: "Mulhacén", category: "Pics", coords: [-3.31, 37.05], tolerance: 100 },
+            { id: "eu-pic-montblanc", name: "Mont Blanc", category: "Pics", coords: [6.86, 45.83], tolerance: 100 },
+            { id: "eu-pic-aneto", name: "Aneto", category: "Pics", coords: [0.65, 42.63], tolerance: 100 },
+            { id: "eu-pic-mussala", name: "Mussala", category: "Pics", coords: [23.58, 42.18], tolerance: 100 },
+            { id: "eu-est-gibraltar", name: "Est. de Gibraltar", category: "Estrets", coords: [-5.6, 36.1], tolerance: 100 },
+            { id: "eu-est-dardanels", name: "Est. dels Dardanels", category: "Estrets", coords: [26.4, 40.2], tolerance: 100 },
+            { id: "eu-est-bosfor", name: "Est. del Bòsfor", category: "Estrets", coords: [29.0, 41.1], tolerance: 100 },
+            { id: "eu-est-maniga", name: "Canal de la Màniga", category: "Estrets", coords: [-1.5, 50.0], tolerance: 150 },
+            { id: "eu-est-calais", name: "Pas de Calais", category: "Estrets", coords: [1.7, 50.9], tolerance: 100 },
+            { id: "eu-mar-mediterrani", name: "Mar Mediterrani", category: "Mars", coords: [18.0, 35.0], tolerance: 350 },
+            { id: "eu-mar-negre", name: "Mar Negre", category: "Mars", coords: [34.0, 43.0], tolerance: 250 },
+            { id: "eu-mar-caspi", name: "Mar Caspi", category: "Mars", coords: [51.0, 41.5], tolerance: 300 },
+            { id: "eu-mar-azov", name: "Mar d'Azov", category: "Mars", coords: [36.0, 46.0], tolerance: 150 },
+            { id: "eu-mar-adriatic", name: "Mar Adriàtic", category: "Mars", coords: [15.0, 43.0], tolerance: 180 },
+            { id: "eu-mar-egeu", name: "Mar Egeu", category: "Mars", coords: [24.5, 39.0], tolerance: 180 },
+            { id: "eu-mar-jonic", name: "Mar Jònic", category: "Mars", coords: [20.0, 38.0], tolerance: 180 },
+            { id: "eu-mar-barentsz", name: "Mar de Barentsz", category: "Mars", coords: [40.0, 75.0], tolerance: 350 },
+            { id: "eu-mar-baltic", name: "Mar Bàltic", category: "Mars", coords: [20.0, 58.0], tolerance: 250 },
+            { id: "eu-mar-nord", name: "Mar del Nord", category: "Mars", coords: [3.0, 56.0], tolerance: 250 },
+            { id: "eu-llac-ladoga", name: "Llac Lâdoga", category: "Llacs", coords: [31.5, 61.0], tolerance: 150 },
+            { id: "eu-ill-balears", name: "Illes Balears", category: "Illes", coords: [2.5, 39.5], tolerance: 120 },
+            { id: "eu-ill-malta", name: "Malta", category: "Illes", coords: [14.4, 35.9], tolerance: 90 },
+            { id: "eu-ill-creta", name: "Creta", category: "Illes", coords: [24.8, 35.3], tolerance: 120 },
+            { id: "eu-ill-corsega", name: "Còrsega", category: "Illes", coords: [9.0, 42.1], tolerance: 110 },
+            { id: "eu-ill-sardenya", name: "Sardenya", category: "Illes", coords: [9.0, 40.0], tolerance: 130 },
+            { id: "eu-ill-islandia", name: "Islàndia", category: "Illes", coords: [-19.0, 65.0], tolerance: 200 },
+            { id: "eu-ill-irlanda", name: "Irlanda", category: "Illes", coords: [-8.0, 53.4], tolerance: 180 },
+            { id: "eu-ill-sicilia", name: "Sicília", category: "Illes", coords: [14.0, 37.5], tolerance: 120 },
+            { id: "eu-ill-xipre", name: "Xipre", category: "Illes", coords: [33.3, 35.1], tolerance: 120 },
+            { id: "eu-riu-volga", name: "El Volga", category: "Rius", coords: [46.0, 50.0], tolerance: 300 },
+            { id: "eu-riu-danubi", name: "El Danubi", category: "Rius", coords: [20.0, 45.0], tolerance: 250 },
+            { id: "eu-riu-loira", name: "El Loira", category: "Rius", coords: [2.0, 47.3], tolerance: 150 },
+            { id: "eu-riu-ebre", name: "L'Ebre", category: "Rius", coords: [0.5, 41.2], tolerance: 120 },
+            { id: "eu-riu-tajo", name: "El Tajo", category: "Rius", coords: [-4.0, 39.8], tolerance: 150 },
+            { id: "eu-riu-rin", name: "El Rin", category: "Rius", coords: [7.5, 50.0], tolerance: 180 },
+            { id: "eu-riu-duero", name: "El Duero", category: "Rius", coords: [-4.5, 41.5], tolerance: 150 },
+            { id: "eu-riu-garona", name: "La Garona", category: "Rius", coords: [0.5, 44.5], tolerance: 120 },
+            { id: "eu-riu-roine", name: "El Roine", category: "Rius", coords: [4.8, 44.0], tolerance: 150 },
+            { id: "eu-riu-ural", name: "Ural", category: "Rius", coords: [58.0, 52.0], tolerance: 250 },
+            { id: "eu-riu-dnieper", name: "El Dnièper", category: "Rius", coords: [32.0, 49.0], tolerance: 200 },
+            { id: "eu-riu-po", name: "el Po", category: "Rius", coords: [10.0, 45.0], tolerance: 150 },
+            { id: "eu-pla-europea", name: "La Gran Plana Europea", category: "Planes", coords: [25.0, 52.0], tolerance: 400 },
+            { id: "eu-alt-massis", name: "Massís Central francès", category: "Altiplans", coords: [3.0, 45.5], tolerance: 150 },
+            { id: "eu-alt-meseta", name: "Meseta Ibèrica", category: "Altiplans", coords: [-3.5, 40.5], tolerance: 200 },
+            { id: "eu-alt-urals", name: "Els monts Urals", category: "Altiplans", coords: [60.0, 60.0], tolerance: 300 },
+            { id: "eu-alt-escandinaves", name: "Les muntanyes Escandinaves", category: "Altiplans", coords: [13.0, 62.0], tolerance: 280 },
+            { id: "eu-alt-vosges", name: "Les Vosges", category: "Altiplans", coords: [7.0, 48.2], tolerance: 120 }
+        ];
+
+        const TILE_LAYERS = {
+            esriPhysical: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 8 }),
+            openTopo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 14 }),
+            esriSatellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 12 })
+        };
+
+        const IRREGULAR_VERBS = [
+            {v1: "arise", v2: "arose", v3: "arisen"}, {v1: "awake", v2: "awoke", v3: "awoken"},
+            {v1: "be", v2: "was/were", v3: "been"}, {v1: "bear", v2: "bore", v3: "born"},
+            {v1: "beat", v2: "beat", v3: "beaten"}, {v1: "become", v2: "became", v3: "become"},
+            {v1: "begin", v2: "began", v3: "begun"}, {v1: "bend", v2: "bent", v3: "bent"},
+            {v1: "bet", v2: "bet", v3: "bet"}, {v1: "bind", v2: "bound", v3: "bound"},
+            {v1: "bite", v2: "bit", v3: "bitten"}, {v1: "bleed", v2: "bled", v3: "bled"},
+            {v1: "blow", v2: "blew", v3: "blown"}, {v1: "break", v2: "broke", v3: "broken"},
+            {v1: "bring", v2: "brought", v3: "brought"}, {v1: "build", v2: "built", v3: "built"},
+            {v1: "burn", v2: "burnt", v3: "burnt"}, {v1: "buy", v2: "bought", v3: "bought"},
+            {v1: "catch", v2: "caught", v3: "caught"}, {v1: "choose", v2: "chose", v3: "chosen"},
+            {v1: "come", v2: "came", v3: "come"}, {v1: "cost", v2: "cost", v3: "cost"},
+            {v1: "cut", v2: "cut", v3: "cut"}, {v1: "deal", v2: "dealt", v3: "dealt"},
+            {v1: "dig", v2: "dug", v3: "dug"}, {v1: "do", v2: "did", v3: "done"},
+            {v1: "draw", v2: "drew", v3: "drawn"}, {v1: "dream", v2: "dreamt", v3: "dreamt"},
+            {v1: "drink", v2: "drank", v3: "drunk"}, {v1: "drive", v2: "drove", v3: "driven"},
+            {v1: "eat", v2: "ate", v3: "eaten"}, {v1: "fall", v2: "fell", v3: "fallen"},
+            {v1: "feed", v2: "fed", v3: "fed"}, {v1: "feel", v2: "felt", v3: "felt"},
+            {v1: "fight", v2: "fought", v3: "fought"}, {v1: "find", v2: "found", v3: "found"},
+            {v1: "fly", v2: "flew", v3: "flown"}, {v1: "forget", v2: "forgot", v3: "forgotten"},
+            {v1: "forgive", v2: "forgave", v3: "forgiven"}, {v1: "freeze", v2: "froze", v3: "frozen"},
+            {v1: "get", v2: "got", v3: "got"}, {v1: "give", v2: "gave", v3: "given"},
+            {v1: "go", v2: "went", v3: "gone"}, {v1: "grow", v2: "grew", v3: "grown"},
+            {v1: "hang", v2: "hung", v3: "hung"}, {v1: "have", v2: "had", v3: "had"},
+            {v1: "hear", v2: "heard", v3: "heard"}, {v1: "hide", v2: "hid", v3: "hidden"},
+            {v1: "hit", v2: "hit", v3: "hit"}, {v1: "hold", v2: "held", v3: "held"},
+            {v1: "hurt", v2: "hurt", v3: "hurt"}, {v1: "keep", v2: "kept", v3: "kept"},
+            {v1: "know", v2: "knew", v3: "known"}, {v1: "lay", v2: "laid", v3: "laid"},
+            {v1: "lead", v2: "led", v3: "led"}, {v1: "learn", v2: "learnt", v3: "learnt"},
+            {v1: "leave", v2: "left", v3: "left"}, {v1: "lend", v2: "lent", v3: "lent"},
+            {v1: "let", v2: "let", v3: "let"}, {v1: "lie", v2: "lay", v3: "lain"},
+            {v1: "light", v2: "lit", v3: "lit"}, {v1: "lose", v2: "lost", v3: "lost"},
+            {v1: "make", v2: "made", v3: "made"}, {v1: "mean", v2: "meant", v3: "meant"},
+            {v1: "meet", v2: "met", v3: "met"}, {v1: "pay", v2: "paid", v3: "paid"},
+            {v1: "put", v2: "put", v3: "put"}, {v1: "read", v2: "read", v3: "read"},
+            {v1: "ride", v2: "rode", v3: "ridden"}, {v1: "ring", v2: "rang", v3: "rung"},
+            {v1: "rise", v2: "rose", v3: "risen"}, {v1: "run", v2: "ran", v3: "run"},
+            {v1: "say", v2: "said", v3: "said"}, {v1: "see", v2: "saw", v3: "seen"},
+            {v1: "sell", v2: "sold", v3: "sold"}, {v1: "send", v2: "sent", v3: "sent"},
+            {v1: "set", v2: "set", v3: "set"}, {v1: "shake", v2: "shook", v3: "shaken"},
+            {v1: "shine", v2: "shone", v3: "shone"}, {v1: "shoot", v2: "shot", v3: "shot"},
+            {v1: "show", v2: "showed", v3: "shown"}, {v1: "shut", v2: "shut", v3: "shut"},
+            {v1: "sing", v2: "sang", v3: "sung"}, {v1: "sink", v2: "sank", v3: "sunk"},
+            {v1: "sit", v2: "sat", v3: "sat"}, {v1: "sleep", v2: "slept", v3: "slept"},
+            {v1: "smell", v2: "smelt", v3: "smelt"}, {v1: "speak", v2: "spoke", v3: "spoken"},
+            {v1: "spell", v2: "spelt", v3: "spelt"}, {v1: "spend", v2: "spent", v3: "spent"},
+            {v1: "spill", v2: "spilt", v3: "spilt"}, {v1: "split", v2: "split", v3: "split"},
+            {v1: "spoil", v2: "spoilt", v3: "spoilt"}, {v1: "stand", v2: "stood", v3: "stood"},
+            {v1: "steal", v2: "stole", v3: "stolen"}, {v1: "stick", v2: "stuck", v3: "stuck"},
+            {v1: "sting", v2: "stung", v3: "stung"}, {v1: "strike", v2: "struck", v3: "struck"},
+            {v1: "swear", v2: "swore", v3: "sworn"}, {v1: "sweep", v2: "swept", v3: "swept"},
+            {v1: "swim", v2: "swam", v3: "swum"}, {v1: "take", v2: "took", v3: "taken"},
+            {v1: "teach", v2: "taught", v3: "taught"}, {v1: "tear", v2: "tore", v3: "torn"},
+            {v1: "tell", v2: "told", v3: "told"}, {v1: "think", v2: "thought", v3: "thought"},
+            {v1: "throw", v2: "threw", v3: "thrown"}, {v1: "understand", v2: "understood", v3: "understood"},
+            {v1: "wake", v2: "woke", v3: "woken"}, {v1: "wear", v2: "wore", v3: "worn"},
+            {v1: "win", v2: "won", v3: "won"}, {v1: "write", v2: "wrote", v3: "written"}
+        ];
+
+        let activeTab = 'home';
+        let globalScore = 0, globalCompletedCount = 0, globalMaxStreak = 0;
+        let soundEnabled = true, soundCtx = null;
+
+        // Map World State
+        let map = null, activeTileLayer = null, currentGeoMode = 'quiz';
+        let currentQuestions = [], questionIndex = 0, targetItem = null;
+        let geoScore = 0, geoStreak = 0, geoMaxStreak = 0, quizResultsHistory = [];
+        let userMarker = null, targetMarker = null, errorPolyline = null;
+        let studyMarkersLayerGroup = L.layerGroup();
+        let mapInitialized = false;
+
+        // Map Europe State
+        let mapEurope = null, activeTileLayerEurope = null, currentGeoModeEurope = 'quiz';
+        let currentQuestionsEurope = [], questionIndexEurope = 0, targetItemEurope = null;
+        let geoScoreEurope = 0, geoStreakEurope = 0, geoMaxStreakEurope = 0;
+        let userMarkerEurope = null, targetMarkerEurope = null, errorPolylineEurope = null;
+        let studyMarkersLayerGroupEurope = L.layerGroup();
+        let mapEuropeInitialized = false;
+
+        let currentMathProblem = null, mathStreak = 0, verbStreak = 0;
+
+        window.onload = function() {
+            populateStudyModal();
+            populateStudyModalEurope();
+            populateVerbStudyModal();
+            generateMathProblem();
+            startVerbQuiz();
+            updateGlobalStatsDisplay();
+        };
+
+        function switchTab(tab) {
+            activeTab = tab;
+            ['home', 'geo', 'europe', 'math', 'english'].forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const nav = document.getElementById(`nav-${t}`);
+                if (t === tab) {
+                    el.classList.remove('hidden');
+                    if (nav) nav.className = "px-3 py-2 rounded-xl font-bold text-sm transition flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow";
+                } else {
+                    el.classList.add('hidden');
+                    if (nav) nav.className = "px-3 py-2 rounded-xl font-semibold text-sm transition flex items-center gap-1.5 text-slate-300 hover:text-white hover:bg-slate-800";
+                }
+            });
+
+            if (tab === 'geo') {
+                if (!mapInitialized) {
+                    initMap();
+                    mapInitialized = true;
+                } else {
+                    map.invalidateSize();
+                }
+                if (currentQuestions.length === 0) resetQuiz();
+            }
+            if (tab === 'europe') {
+                if (!mapEuropeInitialized) {
+                    initMapEurope();
+                    mapEuropeInitialized = true;
+                } else {
+                    mapEurope.invalidateSize();
+                }
+                if (currentQuestionsEurope.length === 0) resetQuizEurope();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('btn-sound').innerText = soundEnabled ? '🔊' : '🔇';
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                if (!soundCtx) soundCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (soundCtx.state === 'suspended') soundCtx.resume();
+                const now = soundCtx.currentTime;
+                const osc = soundCtx.createOscillator();
+                const gain = soundCtx.createGain();
+                osc.connect(gain); gain.connect(soundCtx.destination);
+                if (type === 'correct') {
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25);
+                } else {
+                    osc.frequency.setValueAtTime(240, now);
+                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.35);
+                }
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } catch(e){}
+        }
+
+        function updateGlobalStatsDisplay() {
+            document.getElementById('global-score-val').innerText = `${globalScore} pts`;
+            document.getElementById('global-count-val').innerText = globalCompletedCount;
+            document.getElementById('global-streak-val').innerText = `🔥 ${globalMaxStreak}`;
+        }
+
+        // --- WORLD MAP LOGIC ---
+        function initMap() {
+            map = L.map('map', { center: [20, 10], zoom: 2, minZoom: 2, maxZoom: 10, worldCopyJump: true });
+            activeTileLayer = TILE_LAYERS.esriPhysical;
+            activeTileLayer.addTo(map);
+            studyMarkersLayerGroup.addTo(map);
+            map.on('click', handleMapClick);
+        }
+        function changeMapLayer(key) {
+            if (activeTileLayer) map.removeLayer(activeTileLayer);
+            if (TILE_LAYERS[key]) { activeTileLayer = TILE_LAYERS[key]; activeTileLayer.addTo(map); }
+        }
+        function onCategoryChange() { resetQuiz(); }
+        function resetQuiz() {
+            clearFeedbackAndMarkers();
+            const cat = document.getElementById('select-category').value;
+            const countVal = document.getElementById('select-questions-count').value;
+            let filtered = (cat === 'ALL') ? [...GEOGRAPHY_DATA] : GEOGRAPHY_DATA.filter(i => i.category === cat);
+            filtered.sort(() => Math.random() - 0.5);
+            currentQuestions = filtered.slice(0, countVal === 'ALL' ? filtered.length : parseInt(countVal));
+            questionIndex = 0; geoScore = 0; geoStreak = 0; geoMaxStreak = 0; quizResultsHistory = [];
+            updateHUD();
+            if (currentQuestions.length > 0) loadQuestion();
+        }
+        function loadQuestion() {
+            clearFeedbackAndMarkers();
+            if (questionIndex >= currentQuestions.length) { finishQuiz(); return; }
+            targetItem = currentQuestions[questionIndex];
+            document.getElementById('target-name').innerText = targetItem.name;
+            updateHUD();
+        }
+        function updateHUD() {
+            document.getElementById('quiz-progress').innerText = `${questionIndex + 1} / ${currentQuestions.length}`;
+            document.getElementById('quiz-score').innerText = `${geoScore} pts`;
+            document.getElementById('quiz-streak').innerText = `🔥 ${geoStreak}`;
+        }
+        function handleMapClick(e) {
+            if (currentGeoMode !== 'quiz' || !targetItem) return;
+            if (!document.getElementById('feedback-banner').classList.contains('hidden')) return;
+            const dist = calcDist(e.latlng.lat, e.latlng.lng, targetItem.coords[1], targetItem.coords[0]);
+            const isCorrect = dist <= targetItem.tolerance;
+            renderVisuals(e.latlng.lat, e.latlng.lng, targetItem.coords[1], targetItem.coords[0], dist, isCorrect);
+            let earned = 0;
+            if (isCorrect) {
+                earned = 100 + Math.max(0, Math.round((targetItem.tolerance - dist) / 5));
+                geoScore += earned; geoStreak++;
+                if (geoStreak > geoMaxStreak) geoMaxStreak = geoStreak;
+                globalScore += earned; globalCompletedCount++;
+                if (geoStreak > globalMaxStreak) globalMaxStreak = geoStreak;
+                playSound('correct');
+            } else {
+                geoStreak = 0; globalCompletedCount++;
+                playSound('incorrect');
+            }
+            updateGlobalStatsDisplay(); updateHUD();
+            showBanner(isCorrect, dist, earned);
+        }
+        function calcDist(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+            return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
+        function renderVisuals(cLat, cLng, tLat, tLng, dist, isCorrect) {
+            userMarker = L.marker([cLat, cLng], { icon: L.divIcon({ className: 'pulse-user', iconSize: [18,18], iconAnchor: [9,9] }) }).addTo(map);
+            targetMarker = L.marker([tLat, tLng], { icon: L.divIcon({ className: 'pulse-target', iconSize: [24,24], iconAnchor: [12,12] }) }).addTo(map);
+            targetMarker.bindTooltip(`<b>${targetItem.name}</b>`, { permanent: true, direction: 'top' }).openTooltip();
+            errorPolyline = L.polyline([[cLat, cLng], [tLat, tLng]], { color: isCorrect ? '#10b981' : '#ef4444', weight: 3, dashArray: '6, 8' }).addTo(map);
+            map.flyToBounds([[cLat, cLng], [tLat, tLng]], { padding: [80, 80], maxZoom: 6, duration: 1 });
+        }
+        function showBanner(isCorrect, dist, earned) {
+            const b = document.getElementById('feedback-banner');
+            b.classList.remove('hidden');
+            document.getElementById('feedback-icon').innerText = isCorrect ? '🎉' : '❌';
+            document.getElementById('feedback-title').innerText = isCorrect ? `Correcte! (+${earned} pts)` : `Incorrecte! (${dist} km)`;
+            document.getElementById('feedback-desc').innerText = `Ubicació de "${targetItem.name}".`;
+        }
+        function nextQuestion() { questionIndex++; loadQuestion(); }
+        function clearFeedbackAndMarkers() {
+            document.getElementById('feedback-banner').classList.add('hidden');
+            if (userMarker) map.removeLayer(userMarker);
+            if (targetMarker) map.removeLayer(targetMarker);
+            if (errorPolyline) map.removeLayer(errorPolyline);
+        }
+        function finishQuiz() {
+            document.getElementById('result-score').innerText = `${geoScore} pts`;
+            document.getElementById('modal-results').classList.remove('hidden');
+        }
+        function switchMode(mode) {
+            currentGeoMode = mode; clearFeedbackAndMarkers();
+            if (mode === 'quiz') {
+                document.getElementById('quiz-hud').style.display = 'block';
+                studyMarkersLayerGroup.clearLayers(); resetQuiz();
+            } else {
+                document.getElementById('quiz-hud').style.display = 'none';
+                studyMarkersLayerGroup.clearLayers();
+                const cat = document.getElementById('select-category').value;
+                const items = cat === 'ALL' ? GEOGRAPHY_DATA : GEOGRAPHY_DATA.filter(i => i.category === cat);
+                items.forEach(item => {
+                    let m = L.marker([item.coords[1], item.coords[0]], { icon: L.divIcon({ className: 'study-marker', iconSize: [14,14], iconAnchor: [7,7] }) });
+                    m.bindPopup(`<b>${item.name}</b> (${item.category})`);
+                    studyMarkersLayerGroup.addLayer(m);
+                });
+            }
+        }
+        function openStudyModal() { document.getElementById('modal-study').classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function populateStudyModal() {
+            const c = document.getElementById('study-list-container'); c.innerHTML = '';
+            [...new Set(GEOGRAPHY_DATA.map(i => i.category))].forEach(cat => {
+                let items = GEOGRAPHY_DATA.filter(i => i.category === cat);
+                let div = document.createElement('div');
+                div.className = "bg-slate-800 p-4 rounded-2xl";
+                div.innerHTML = `<h4 class="font-bold text-amber-400 mb-2">${cat} (${items.length})</h4><div class="grid grid-cols-2 gap-2 text-xs">` +
+                    items.map(i => `<div class="bg-slate-900 p-2 rounded">${i.name}</div>`).join('') + `</div>`;
+                c.appendChild(div);
+            });
+        }
+
+
+        // --- EUROPE MAP LOGIC ---
+        function initMapEurope() {
+            mapEurope = L.map('map-europe', { center: [50, 15], zoom: 4, minZoom: 3, maxZoom: 10, worldCopyJump: true });
+            activeTileLayerEurope = TILE_LAYERS.esriPhysical;
+            activeTileLayerEurope.addTo(mapEurope);
+            studyMarkersLayerGroupEurope.addTo(mapEurope);
+            mapEurope.on('click', handleMapClickEurope);
+        }
+        function changeMapLayerEurope(key) {
+            if (activeTileLayerEurope) mapEurope.removeLayer(activeTileLayerEurope);
+            if (TILE_LAYERS[key]) { activeTileLayerEurope = TILE_LAYERS[key]; activeTileLayerEurope.addTo(mapEurope); }
+        }
+        function onCategoryChangeEurope() { resetQuizEurope(); }
+        function resetQuizEurope() {
+            clearFeedbackAndMarkersEurope();
+            const cat = document.getElementById('select-category-europe').value;
+            const countVal = document.getElementById('select-questions-count-europe').value;
+            let filtered = (cat === 'ALL') ? [...EUROPE_GEOGRAPHY_DATA] : EUROPE_GEOGRAPHY_DATA.filter(i => i.category === cat);
+            filtered.sort(() => Math.random() - 0.5);
+            currentQuestionsEurope = filtered.slice(0, countVal === 'ALL' ? filtered.length : parseInt(countVal));
+            questionIndexEurope = 0; geoScoreEurope = 0; geoStreakEurope = 0; geoMaxStreakEurope = 0;
+            updateHUDEurope();
+            if (currentQuestionsEurope.length > 0) loadQuestionEurope();
+        }
+        function loadQuestionEurope() {
+            clearFeedbackAndMarkersEurope();
+            if (questionIndexEurope >= currentQuestionsEurope.length) { finishQuizEurope(); return; }
+            targetItemEurope = currentQuestionsEurope[questionIndexEurope];
+            document.getElementById('target-name-europe').innerText = targetItemEurope.name;
+            updateHUDEurope();
+        }
+        function updateHUDEurope() {
+            document.getElementById('quiz-progress-europe').innerText = `${questionIndexEurope + 1} / ${currentQuestionsEurope.length}`;
+            document.getElementById('quiz-score-europe').innerText = `${geoScoreEurope} pts`;
+            document.getElementById('quiz-streak-europe').innerText = `🔥 ${geoStreakEurope}`;
+        }
+        function handleMapClickEurope(e) {
+            if (currentGeoModeEurope !== 'quiz' || !targetItemEurope) return;
+            if (!document.getElementById('feedback-banner-europe').classList.contains('hidden')) return;
+            const dist = calcDist(e.latlng.lat, e.latlng.lng, targetItemEurope.coords[1], targetItemEurope.coords[0]);
+            const isCorrect = dist <= targetItemEurope.tolerance;
+            renderVisualsEurope(e.latlng.lat, e.latlng.lng, targetItemEurope.coords[1], targetItemEurope.coords[0], dist, isCorrect);
+            let earned = 0;
+            if (isCorrect) {
+                earned = 100 + Math.max(0, Math.round((targetItemEurope.tolerance - dist) / 3));
+                geoScoreEurope += earned; geoStreakEurope++;
+                if (geoStreakEurope > geoMaxStreakEurope) geoMaxStreakEurope = geoStreakEurope;
+                globalScore += earned; globalCompletedCount++;
+                if (geoStreakEurope > globalMaxStreak) globalMaxStreak = geoStreakEurope;
+                playSound('correct');
+            } else {
+                geoStreakEurope = 0; globalCompletedCount++;
+                playSound('incorrect');
+            }
+            updateGlobalStatsDisplay(); updateHUDEurope();
+            showBannerEurope(isCorrect, dist, earned);
+        }
+        function renderVisualsEurope(cLat, cLng, tLat, tLng, dist, isCorrect) {
+            userMarkerEurope = L.marker([cLat, cLng], { icon: L.divIcon({ className: 'pulse-user', iconSize: [18,18], iconAnchor: [9,9] }) }).addTo(mapEurope);
+            targetMarkerEurope = L.marker([tLat, tLng], { icon: L.divIcon({ className: 'pulse-target', iconSize: [24,24], iconAnchor: [12,12] }) }).addTo(mapEurope);
+            targetMarkerEurope.bindTooltip(`<b>${targetItemEurope.name}</b>`, { permanent: true, direction: 'top' }).openTooltip();
+            errorPolylineEurope = L.polyline([[cLat, cLng], [tLat, tLng]], { color: isCorrect ? '#10b981' : '#ef4444', weight: 3, dashArray: '6, 8' }).addTo(mapEurope);
+            mapEurope.flyToBounds([[cLat, cLng], [tLat, tLng]], { padding: [80, 80], maxZoom: 6, duration: 1 });
+        }
+        function showBannerEurope(isCorrect, dist, earned) {
+            const b = document.getElementById('feedback-banner-europe');
+            b.classList.remove('hidden');
+            document.getElementById('feedback-icon-europe').innerText = isCorrect ? '🎉' : '❌';
+            document.getElementById('feedback-title-europe').innerText = isCorrect ? `Correcte! (+${earned} pts)` : `Incorrecte! (${dist} km)`;
+            document.getElementById('feedback-desc-europe').innerText = `Ubicació de "${targetItemEurope.name}".`;
+        }
+        function nextQuestionEurope() { questionIndexEurope++; loadQuestionEurope(); }
+        function clearFeedbackAndMarkersEurope() {
+            document.getElementById('feedback-banner-europe').classList.add('hidden');
+            if (userMarkerEurope) mapEurope.removeLayer(userMarkerEurope);
+            if (targetMarkerEurope) mapEurope.removeLayer(targetMarkerEurope);
+            if (errorPolylineEurope) mapEurope.removeLayer(errorPolylineEurope);
+        }
+        function finishQuizEurope() {
+            document.getElementById('result-score').innerText = `${geoScoreEurope} pts`;
+            document.getElementById('modal-results').classList.remove('hidden');
+        }
+        function switchModeEurope(mode) {
+            currentGeoModeEurope = mode; clearFeedbackAndMarkersEurope();
+            if (mode === 'quiz') {
+                document.getElementById('quiz-hud-europe').style.display = 'block';
+                studyMarkersLayerGroupEurope.clearLayers(); resetQuizEurope();
+            } else {
+                document.getElementById('quiz-hud-europe').style.display = 'none';
+                studyMarkersLayerGroupEurope.clearLayers();
+                const cat = document.getElementById('select-category-europe').value;
+                const items = cat === 'ALL' ? EUROPE_GEOGRAPHY_DATA : EUROPE_GEOGRAPHY_DATA.filter(i => i.category === cat);
+                items.forEach(item => {
+                    let m = L.marker([item.coords[1], item.coords[0]], { icon: L.divIcon({ className: 'study-marker', iconSize: [14,14], iconAnchor: [7,7] }) });
+                    m.bindPopup(`<b>${item.name}</b> (${item.category})`);
+                    studyMarkersLayerGroupEurope.addLayer(m);
+                });
+            }
+        }
+        function openStudyModalEurope() { document.getElementById('modal-study-europe').classList.remove('hidden'); }
+        function populateStudyModalEurope() {
+            const c = document.getElementById('study-list-container-europe'); c.innerHTML = '';
+            [...new Set(EUROPE_GEOGRAPHY_DATA.map(i => i.category))].forEach(cat => {
+                let items = EUROPE_GEOGRAPHY_DATA.filter(i => i.category === cat);
+                let div = document.createElement('div');
+                div.className = "bg-slate-800 p-4 rounded-2xl";
+                div.innerHTML = `<h4 class="font-bold text-sky-400 mb-2">${cat} (${items.length})</h4><div class="grid grid-cols-2 gap-2 text-xs">` +
+                    items.map(i => `<div class="bg-slate-900 p-2 rounded">${i.name}</div>`).join('') + `</div>`;
+                c.appendChild(div);
+            });
+        }
+
+
+        // --- MATH & VERBS LOGIC ---
+        function gcd(a, b) { return b === 0 ? Math.abs(a) : gcd(b, a % b); }
+        function generateMathProblem() {
+            const op = document.getElementById('math-op-type').value;
+            const diff = document.getElementById('math-diff').value;
+            document.getElementById('math-explanation-box').classList.add('hidden');
+            let maxNum = diff === 'easy' ? 12 : (diff === 'med' ? 50 : 150);
+            let a = Math.floor(Math.random() * maxNum) + 1;
+            let b = Math.floor(Math.random() * maxNum) + 1;
+            if (op === 'add') {
+                currentMathProblem = { type: 'simple', expr: `${a} + ${b} = ?`, ans: a + b, explain: `Suma ${a} + ${b} = ${a+b}.` };
+            } else if (op === 'sub') {
+                if (b > a) [a, b] = [b, a];
+                currentMathProblem = { type: 'simple', expr: `${a} - ${b} = ?`, ans: a - b, explain: `Resta ${a} - ${b} = ${a-b}.` };
+            } else if (op === 'mul') {
+                currentMathProblem = { type: 'simple', expr: `${a} × ${b} = ?`, ans: a * b, explain: `Multiplicació ${a} × ${b} = ${a*b}.` };
+            } else {
+                let ans = Math.floor(Math.random() * 10) + 1;
+                let prod = b * ans;
+                currentMathProblem = { type: 'simple', expr: `${prod} ➗ ${b} = ?`, ans: ans, explain: `Divisió ${prod} ➗ ${b} = ${ans}.` };
+            }
+            document.getElementById('math-expression').innerHTML = currentMathProblem.expr;
+            document.getElementById('math-input-container').innerHTML = `<input type="number" id="math-user-input" class="bg-slate-900 border-2 border-slate-600 text-white font-black text-2xl rounded-2xl px-4 py-3 text-center w-40 outline-none" autofocus>`;
+        }
+        function checkMathAnswer() {
+            if (!currentMathProblem) return;
+            const val = parseFloat(document.getElementById('math-user-input').value);
+            const isCorrect = val === currentMathProblem.ans;
+            const expBox = document.getElementById('math-explanation-box');
+            expBox.classList.remove('hidden');
+            if (isCorrect) {
+                mathStreak++; globalScore += 50; globalCompletedCount++;
+                if (mathStreak > globalMaxStreak) globalMaxStreak = mathStreak;
+                updateGlobalStatsDisplay(); playSound('correct');
+                document.getElementById('math-explanation-text').innerHTML = `<span class="text-emerald-400 font-bold">Correcte! (+50 pts)</span>`;
+                setTimeout(generateMathProblem, 2000);
+            } else {
+                mathStreak = 0; globalCompletedCount++; updateGlobalStatsDisplay(); playSound('incorrect');
+                document.getElementById('math-explanation-text').innerHTML = `<span class="text-red-400 font-bold">Incorrecte.</span> ${currentMathProblem.explain}`;
+            }
+            document.getElementById('math-streak-badge').innerText = `🔥 Ratxa: ${mathStreak}`;
+        }
+
+        function startVerbQuiz() {
+            const container = document.getElementById('verb-quiz-container');
+            const countVal = document.getElementById('verb-count-select').value;
+            let shuffled = [...IRREGULAR_VERBS].sort(() => 0.5 - Math.random());
+            let selected = countVal === 'all' ? shuffled : shuffled.slice(0, parseInt(countVal));
+            let html = `<table class="w-full text-left text-xs sm:text-sm border-collapse"><thead class="bg-slate-950 text-purple-400 uppercase text-[11px] font-black border-b border-slate-700"><tr><th class="p-3">#</th><th class="p-3">Infinitive (V1)</th><th class="p-3">Past Simple (V2)</th><th class="p-3">Past Participle (V3)</th></tr></thead><tbody class="divide-y divide-slate-800 text-slate-200">`;
+            selected.forEach((v, idx) => {
+                let col = Math.floor(Math.random() * 3) + 1;
+                let c1 = col === 1 ? `<span class="font-bold text-amber-400">${v.v1}</span>` : `<input type="text" data-correct="${v.v1}" class="verb-input bg-slate-900 border border-slate-700 text-white font-bold px-3 py-1.5 rounded-lg w-full outline-none" autocomplete="off" placeholder="...">`;
+                let c2 = col === 2 ? `<span class="font-bold text-amber-400">${v.v2}</span>` : `<input type="text" data-correct="${v.v2}" class="verb-input bg-slate-900 border border-slate-700 text-white font-bold px-3 py-1.5 rounded-lg w-full outline-none" autocomplete="off" placeholder="...">`;
+                let c3 = col === 3 ? `<span class="font-bold text-amber-400">${v.v3}</span>` : `<input type="text" data-correct="${v.v3}" class="verb-input bg-slate-900 border border-slate-700 text-white font-bold px-3 py-1.5 rounded-lg w-full outline-none" autocomplete="off" placeholder="...">`;
+                html += `<tr><td class="p-3 text-slate-500">${idx+1}</td><td class="p-2.5">${c1}</td><td class="p-2.5">${c2}</td><td class="p-2.5">${c3}</td></tr>`;
+            });
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+        function checkVerbAnswers() {
+            const inputs = document.querySelectorAll('.verb-input');
+            let correct = 0;
+            inputs.forEach(i => {
+                let ans = i.getAttribute('data-correct').toLowerCase().trim();
+                let val = i.value.toLowerCase().trim();
+                if (ans.split('/').includes(val) || val === ans) { correct++; i.className = "verb-input bg-emerald-950 border-2 border-emerald-500 text-emerald-300 font-bold px-3 py-1.5 rounded-lg w-full outline-none"; }
+                else { i.className = "verb-input bg-red-950 border-2 border-red-500 text-red-300 font-bold px-3 py-1.5 rounded-lg w-full outline-none"; }
+            });
+            document.getElementById('verb-results-msg').innerText = `Has encertat ${correct} de ${inputs.length} forats!`;
+        }
+        function openVerbStudyModal() { document.getElementById('modal-verb-study').classList.remove('hidden'); }
+        function populateVerbStudyModal() {
+            const tbody = document.getElementById('verb-study-tbody'); tbody.innerHTML = '';
+            [...IRREGULAR_VERBS].sort((a,b)=>a.v1.localeCompare(b.v1)).forEach(v => {
+                tbody.innerHTML += `<tr class="hover:bg-slate-800"><td class="p-3 font-bold text-amber-400">${v.v1}</td><td class="p-3">${v.v2}</td><td class="p-3">${v.v3}</td></tr>`;
+            });
+        }
+    </script>
+</body>
+</html>
